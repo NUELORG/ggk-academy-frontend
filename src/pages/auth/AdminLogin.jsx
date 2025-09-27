@@ -65,12 +65,12 @@ const AdminLogin = () => {
           <div className="text-center">
             <div className="mb-6">
               <img 
-                src="/images/logo.png" 
-                alt="TGCRA Logo" 
+                src="/images/holyChildLogo.jpeg" 
+                alt="Holy Child Logo" 
                 className="h-20 w-20 mx-auto mb-4"
               />
               <span className="text-2xl font-bold text-gray-900 block">
-                The Golden Crest Royal Academy
+                Holy Child School
               </span>
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
@@ -192,7 +192,7 @@ const AdminLogin = () => {
               Welcome Back!
             </h3>
             <p className="text-xl opacity-90 mb-8">
-              Manage TGCRA Secondary School's academic records with ease and efficiency.
+              Manage Holy Child School's academic records with ease and efficiency.
             </p>
             <div className="grid grid-cols-2 gap-6 text-center">
               <div>

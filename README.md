@@ -93,8 +93,30 @@ Teachers receive additional metadata:
 ## Getting Started
 
 1. Install dependencies: `npm install`
-2. Configure API endpoint in `src/services/API.js`
-3. Run development server: `npm run dev`
+2. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+3. Configure the API endpoint in `.env`:
+   ```
+   VITE_API_BASE_URL=http://localhost:8000/api
+   ```
+4. Run development server: `npm run dev`
+
+## Environment Variables
+
+The application uses the following environment variables:
+
+- `VITE_API_BASE_URL`: The base URL for the backend API (default: http://localhost:8000/api)
+- `VITE_NODE_ENV`: The environment mode (development/production)
+
+### Environment Files
+
+- `.env` - Local environment variables (not committed to git)
+- `.env.example` - Example environment file (committed to git)
+- `.env.local` - Local overrides (not committed to git)
+- `.env.development.local` - Development overrides (not committed to git)
+- `.env.production.local` - Production overrides (not committed to git)
 
 ## Backend Requirements
 

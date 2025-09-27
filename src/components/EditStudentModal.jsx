@@ -143,8 +143,9 @@ const EditStudentModal = ({ isOpen, onClose, student, onSuccess }) => {
     try {
       let response;
       if (user?.role === 'teacher') {
-        response = await API.updateStudent(student.id, formData);
+        response = await API.updateTeacherStudent(student.id, formData);
       } else {
+        // Admin should use admin endpoint
         response = await API.updateStudent(student.id, formData);
       }
 

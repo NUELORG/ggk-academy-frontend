@@ -730,6 +730,36 @@ const ManageScores = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Term
+                  </label>
+                  <select
+                    value={term}
+                    onChange={(e) => {
+                      const newTerm = e.target.value;
+                      setTerm(newTerm);
+                      // Load existing score for this term if student is selected
+                      if (selectedStudent) {
+                        loadExistingScore(selectedStudent.id, newTerm);
+                      }
+                    }}
+                    disabled={editingScore !== null}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
+                      editingScore !== null ? 'bg-gray-100 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <option value="first">First Term</option>
+                    <option value="second">Second Term</option>
+                    <option value="third">Third Term</option>
+                  </select>
+                  {editingScore && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Term cannot be changed when editing an existing score
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Student
                   </label>
                   <select
@@ -757,36 +787,6 @@ const ManageScores = () => {
                   {editingScore && (
                     <p className="text-xs text-gray-500 mt-1">
                       Student cannot be changed when editing an existing score
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Term
-                  </label>
-                  <select
-                    value={term}
-                    onChange={(e) => {
-                      const newTerm = e.target.value;
-                      setTerm(newTerm);
-                      // Load existing score for this term if student is selected
-                      if (selectedStudent) {
-                        loadExistingScore(selectedStudent.id, newTerm);
-                      }
-                    }}
-                    disabled={editingScore !== null}
-                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
-                      editingScore !== null ? 'bg-gray-100 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    <option value="first">First Term</option>
-                    <option value="second">Second Term</option>
-                    <option value="third">Third Term</option>
-                  </select>
-                  {editingScore && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Term cannot be changed when editing an existing score
                     </p>
                   )}
                 </div>

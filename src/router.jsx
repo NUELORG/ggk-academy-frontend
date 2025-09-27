@@ -46,6 +46,7 @@ import Profile from './pages/admin/Profile';
 // Teacher pages
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import TeacherStudentResults from './pages/teacher/TeacherStudentResults';
+import TeacherProfile from './pages/teacher/Profile';
 
 const router = createBrowserRouter([
   // Guest routes (public)
@@ -209,7 +210,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'profile',
-        element: <Profile />,
+        element: <TeacherProfile />,
       },
       {
         path: '*',

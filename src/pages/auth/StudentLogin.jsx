@@ -54,10 +54,10 @@ const StudentLogin = () => {
           </Link>
         </div>
         <Link to="/" className="flex justify-center">
-          <img src="/images/logo.png" alt="TGCRA Logo" className="h-20 w-auto mx-auto" />
+          <img src="/images/holyChildLogo.jpeg" alt="Holy Child Logo" className="h-20 w-auto mx-auto" />
         </Link>
         <h2 className="text-center text-3xl font-extrabold text-gray-900 mt-4">
-          TGCRA Student Portal
+          Holy Child Student Portal
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           Access your academic results and progress

@@ -67,7 +67,7 @@ const Home = () => {
     {
       name: "Mrs. Adebayo Kemi",
       role: "Parent of SS3 Student",
-      content: "TGCRA has transformed my daughter's academic journey. The digital platform provides real-time insights into her progress, and the teachers are incredibly supportive. I can confidently say this is the best investment in her future.",
+      content: "Holy Child School has transformed my daughter's academic journey. The digital platform provides real-time insights into her progress, and the teachers are incredibly supportive. I can confidently say this is the best investment in her future.",
       rating: 5,
       avatar: "👩‍👧",
       student: "Aisha Adebayo - SS3A"
@@ -91,7 +91,7 @@ const Home = () => {
     {
       name: "Dr. Sarah Williams",
       role: "Principal",
-      content: "TGCRA's digital platform has elevated our school to new heights. The comprehensive system ensures transparency, accountability, and excellence in academic management. Our students' performance has improved significantly.",
+      content: "Holy Child School's digital platform has elevated our school to new heights. The comprehensive system ensures transparency, accountability, and excellence in academic management. Our students' performance has improved significantly.",
       rating: 5,
       avatar: "👩‍💼",
       student: "School Principal"
@@ -169,18 +169,18 @@ const Home = () => {
             <div className="flex items-center group cursor-pointer">
               <div className="relative">
                 <img 
-                  src="/images/logo.png" 
-                  alt="TGCRA Logo" 
+                  src="/images/holyChildLogo.jpeg" 
+                  alt="Holy Child Logo" 
                   className="h-12 w-12 mr-4 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3"
                 />
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-pulse"></div>
               </div>
               <div>
                 <span className="text-2xl font-bold text-gray-900 hidden sm:block group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-red-600 group-hover:to-blue-600 transition-all duration-300">
-                  The Golden Crest Royal Academy
+                  Holy Child School
                 </span>
                 <span className="text-2xl font-bold text-gray-900 sm:hidden group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-red-600 group-hover:to-blue-600 transition-all duration-300">
-                  TGCRA
+                  HCS
                 </span>
                 <p className="text-sm text-gray-600 hidden sm:block">Excellence in Education</p>
               </div>
@@ -296,28 +296,28 @@ const Home = () => {
               <div className="flex items-center space-x-4">
                 <div className="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center border border-gray-100">
                   <img 
-                    src="/images/logo.png" 
-                    alt="TGCRA Logo" 
+                    src="/images/holyChildLogo.jpeg" 
+                    alt="Holy Child Logo" 
                     className="h-12 w-12"
                   />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Est. 2006</div>
-                  <div className="text-lg font-bold text-gray-900">The Golden Crest Royal Academy</div>
+                  <div className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Est. 2011</div>
+                  <div className="text-lg font-bold text-gray-900">Holy Child School</div>
                 </div>
               </div>
 
               {/* Main Heading */}
               <div className="space-y-4">
                 <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                  Digital Excellence in
+                  Nurturing Excellence in
                   <span className="block text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-blue-600">
                     Education
                   </span>
                 </h1>
                 <p className="text-xl text-gray-600 leading-relaxed max-w-lg">
                   Empowering students with modern technology for academic success. 
-                  Access your results, track progress, and excel in your studies.
+                  Access your results, track progress, and excel in your studies at Holy Child School.
                 </p>
               </div>
 
@@ -352,7 +352,7 @@ const Home = () => {
                   <div className="text-sm text-gray-600">Pass Rate</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">18+</div>
+                  <div className="text-2xl font-bold text-gray-900">14+</div>
                   <div className="text-sm text-gray-600">Years</div>
                 </div>
               </div>
@@ -371,7 +371,7 @@ const Home = () => {
                         <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                       </div>
-                      <div className="text-sm text-gray-500">TGCRA Portal</div>
+                      <div className="text-sm text-gray-500">Holy Child Portal</div>
                     </div>
 
                     {/* Content */}
@@ -639,7 +639,7 @@ const Home = () => {
           <h2 className="text-5xl md:text-6xl font-bold text-white mb-8">
             Ready to Join the 
             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
-              TGCRA Family?
+              Holy Child Family?
             </span>
           </h2>
           <p className="text-xl text-gray-300 mb-12 leading-relaxed max-w-4xl mx-auto">
@@ -715,20 +715,20 @@ const Home = () => {
               <div className="flex items-center mb-8">
                 <div className="relative">
                   <img 
-                    src="/images/logo.png" 
-                    alt="TGCRA Logo" 
+                    src="/images/holyChildLogo.jpeg" 
+                    alt="Holy Child Logo" 
                     className="h-16 w-16 mr-4"
                   />
                   <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-pulse"></div>
                 </div>
                 <div>
-                  <span className="text-3xl font-bold">The Golden Crest Royal Academy</span>
+                  <span className="text-3xl font-bold">Holy Child School</span>
                   <p className="text-blue-200 text-sm">Excellence in Education</p>
                 </div>
               </div>
               <p className="text-gray-300 mb-8 leading-relaxed text-lg max-w-2xl">
-                Empowering students with cutting-edge digital tools for academic success. 
-                We are committed to providing world-class education through innovative technology and dedicated teaching.
+                Nurturing students with cutting-edge digital tools for academic success. 
+                We are committed to providing world-class education through innovative technology and dedicated teaching at Holy Child School.
               </p>
               <div className="space-y-4">
                 <div className="flex items-center group">
@@ -755,7 +755,7 @@ const Home = () => {
                   </div>
                   <div>
                     <div className="font-semibold text-white">Email</div>
-                    <div className="text-gray-300">info@tgcra.edu.ng</div>
+                    <div className="text-gray-300">info@holychild.edu.ng</div>
                   </div>
                 </div>
               </div>
@@ -792,7 +792,7 @@ const Home = () => {
                 </li>
                 <li className="flex items-center text-gray-300">
                   <Mail className="h-5 w-5 mr-3" />
-                  <span>info@tgcra.edu.ng</span>
+                  <span>info@holychild.edu.ng</span>
                 </li>
               </ul>
               

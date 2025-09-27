@@ -212,13 +212,22 @@ const Results = () => {
         return;
       }
       
-      // Navigate to student results page with the data
-      navigate(`/admin/student-results/${studentId}`, { 
-        state: { 
-          studentResults: response.data || response,
-          userRole: user?.role 
-        } 
-      });
+      // Navigate to student results page with the data based on user role
+      if (user?.role === 'admin') {
+        navigate(`/admin/students/${studentId}/results`, { 
+          state: { 
+            studentResults: response.data || response,
+            userRole: user?.role 
+          } 
+        });
+      } else if (user?.role === 'teacher' && user?.is_form_teacher) {
+        navigate(`/teacher/student-results/${studentId}`, { 
+          state: { 
+            studentResults: response.data || response,
+            userRole: user?.role 
+          } 
+        });
+      }
     } catch (error) {
       console.error('Error fetching student results:', error);
       if (error.response?.status === 403) {
@@ -559,9 +568,6 @@ const Results = () => {
                         Average Score
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Grade
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -600,15 +606,6 @@ const Results = () => {
                         <div className="text-sm font-medium text-gray-900">
                               {average > 0 ? `${average}%` : 'No scores'}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                            {average > 0 ? (
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getGradeColor(grade)}`}>
-                                {grade}
-                          </span>
-                        ) : (
-                              <span className="text-gray-400">-</span>
-                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
@@ -659,16 +656,6 @@ const Results = () => {
                             <span className="font-medium text-gray-900">
                               {average > 0 ? `${average}%` : 'No scores'}
                             </span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-500">Grade:</span>
-                            {average > 0 ? (
-                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getGradeColor(grade)}`}>
-                                {grade}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400">-</span>
-                            )}
                           </div>
                         </div>
                         

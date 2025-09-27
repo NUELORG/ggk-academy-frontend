@@ -1028,9 +1028,9 @@ const TeachersTab = () => {
     const cleanName = name.toLowerCase().replace(/[^a-z\s]/g, '').trim();
     const nameParts = cleanName.split(' ').filter(part => part.length > 0);
     if (nameParts.length >= 2) {
-      return `${nameParts[0]}.${nameParts[nameParts.length - 1]}`;
+      return `${nameParts[0]}.${nameParts[nameParts.length - 1]}.holychild`;
     } else if (nameParts.length === 1) {
-      return `${nameParts[0]}`;
+      return `${nameParts[0]}.holychild`;
     }
     return '';
   };
@@ -1061,7 +1061,7 @@ const TeachersTab = () => {
     try {
       const teacherData = {
         name: newTeacher.name,
-        email: newTeacher.email || `${newTeacher.username}@tgcra.edu.ng`, // Generate email if not provided
+        email: newTeacher.email || `${newTeacher.username}@holychild.edu.ng`, // Generate email if not provided
         username: newTeacher.username,
         password: newTeacher.password || 'password', // Use provided password or default
         role: 'teacher',
@@ -1265,12 +1265,12 @@ const TeachersTab = () => {
                 type="email"
                 value={newTeacher.email}
                 onChange={(e) => handleTeacherChange('email', e.target.value)}
-                placeholder="teacher@tgcra.edu.ng"
+                placeholder="teacher@holychild.edu.ng"
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
                 style={{ '--tw-ring-color': COLORS.primary.red }}
               />
               <p className="text-xs text-gray-500 mt-1">
-                If not provided, email will be auto-generated as: {newTeacher.username ? `${newTeacher.username}@tgcra.edu.ng` : 'username@tgcra.edu.ng'}
+                If not provided, email will be auto-generated as: {newTeacher.username ? `${newTeacher.username}@holychild.edu.ng` : 'username@holychild.edu.ng'}
               </p>
             </div>
             <div>
@@ -1570,77 +1570,104 @@ const TeachersTab = () => {
 
 // Teacher Activities Tab Component
 const TeacherActivitiesTab = () => {
-  const [activities, setActivities] = useState([
-    {
-      id: 1,
-      teacher: 'Mrs. Sarah Johnson',
-      activity: 'Result Entry',
-      subject: 'Mathematics',
-      class: 'JSS 1A',
-      date: '2024-01-15',
-      time: '10:30 AM',
-      status: 'completed',
-      description: 'Entered mid-term results for 35 students'
-    },
-    {
-      id: 2,
-      teacher: 'Mr. David Smith',
-      activity: 'Attendance Marking',
-      subject: 'English Language',
-      class: 'JSS 1B',
-      date: '2024-01-15',
-      time: '09:15 AM',
-      status: 'completed',
-      description: 'Marked attendance for 32 students'
-    },
-    {
-      id: 3,
-      teacher: 'Mrs. Emily Brown',
-      activity: 'Assignment Grading',
-      subject: 'Chemistry',
-      class: 'JSS 3A',
-      date: '2024-01-14',
-      time: '02:45 PM',
-      status: 'in-progress',
-      description: 'Grading laboratory reports'
-    },
-    {
-      id: 4,
-      teacher: 'Mr. Michael Wilson',
-      activity: 'Parent Meeting',
-      subject: 'General',
-      class: 'SS 1A',
-      date: '2024-01-13',
-      time: '03:00 PM',
-      status: 'completed',
-      description: 'Parent-teacher conference for 5 students'
-    },
-    {
-      id: 5,
-      teacher: 'Mrs. Jennifer Davis',
-      activity: 'Lesson Planning',
-      subject: 'Literature',
-      class: 'SS 2A',
-      date: '2024-01-12',
-      time: '04:20 PM',
-      status: 'completed',
-      description: 'Prepared lesson plan for next week'
-    }
-  ]);
-
+  const [activities, setActivities] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedTeacher, setSelectedTeacher] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const { showError } = useNotification();
+
+  useEffect(() => {
+    fetchActivities();
+    fetchTeachers();
+  }, []);
+
+  const fetchActivities = async () => {
+    try {
+      setLoading(true);
+      // For now, we'll create a mock implementation since there's no specific activities API
+      // In a real implementation, you would call an API endpoint like API.getTeacherActivities()
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock activities data - in real implementation, this would come from the API
+      const mockActivities = [
+        {
+          id: 1,
+          teacher_id: 1,
+          teacher: 'John Doe',
+          activity: 'Result Entry',
+          subject: 'Mathematics',
+          class: 'JSS 1A',
+          date: new Date().toISOString().split('T')[0],
+          time: '10:30 AM',
+          status: 'completed',
+          description: 'Entered mid-term results for 35 students'
+        },
+        {
+          id: 2,
+          teacher_id: 2,
+          teacher: 'Jane Smith',
+          activity: 'Score Update',
+          subject: 'English Language',
+          class: 'JSS 1B',
+          date: new Date(Date.now() - 86400000).toISOString().split('T')[0], // Yesterday
+          time: '09:15 AM',
+          status: 'completed',
+          description: 'Updated student scores for 32 students'
+        },
+        {
+          id: 3,
+          teacher_id: 3,
+          teacher: 'Mike Johnson',
+          activity: 'Score Entry',
+          subject: 'Chemistry',
+          class: 'JSS 3A',
+          date: new Date(Date.now() - 172800000).toISOString().split('T')[0], // 2 days ago
+          time: '02:45 PM',
+          status: 'in-progress',
+          description: 'Entering laboratory test scores'
+        }
+      ];
+      
+      setActivities(mockActivities);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+      showError('Failed to load teacher activities');
+      setActivities([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTeachers = async () => {
+    try {
+      const response = await API.getUsers();
+      let usersData = [];
+      
+      if (response && response.data) {
+        if (Array.isArray(response.data)) {
+          usersData = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          usersData = response.data.data;
+        }
+      }
+      
+      const teachersData = usersData.filter(user => user.role === 'teacher');
+      setTeachers(teachersData);
+    } catch (error) {
+      console.error('Error fetching teachers:', error);
+      setTeachers([]);
+    }
+  };
 
   const availableTeachers = [
-    'all',
-    'Mrs. Sarah Johnson',
-    'Mr. David Smith', 
-    'Mrs. Emily Brown',
-    'Mr. Michael Wilson',
-    'Mrs. Jennifer Davis',
-    'Mr. Robert Taylor',
-    'Mrs. Lisa Anderson',
-    'Mr. James Martinez'
+    { value: 'all', label: 'All Teachers' },
+    ...teachers.map(teacher => ({
+      value: teacher.id,
+      label: teacher.name
+    }))
   ];
 
   const getStatusColor = (status) => {
@@ -1667,7 +1694,7 @@ const TeacherActivitiesTab = () => {
   };
 
   const filteredActivities = activities.filter(activity => {
-    const matchesTeacher = selectedTeacher === 'all' || activity.teacher === selectedTeacher;
+    const matchesTeacher = selectedTeacher === 'all' || activity.teacher_id == selectedTeacher;
     const matchesStatus = selectedStatus === 'all' || activity.status === selectedStatus;
     return matchesTeacher && matchesStatus;
   });
@@ -1684,8 +1711,8 @@ const TeacherActivitiesTab = () => {
             style={{ '--tw-ring-color': COLORS.primary.red }}
           >
             {availableTeachers.map((teacher) => (
-              <option key={teacher} value={teacher}>
-                {teacher === 'all' ? 'All Teachers' : teacher}
+              <option key={teacher.value} value={teacher.value}>
+                {teacher.label}
               </option>
             ))}
           </select>
@@ -1765,8 +1792,15 @@ const TeacherActivitiesTab = () => {
         <div className="px-6 py-4 border-b border-gray-200">
           <h4 className="text-lg font-medium text-gray-900">Recent Activities</h4>
         </div>
-        <div className="divide-y divide-gray-200">
-          {filteredActivities.map((activity) => (
+        
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+            <span className="ml-2 text-gray-600">Loading activities...</span>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-200">
+            {filteredActivities.map((activity) => (
             <div key={activity.id} className="p-6 hover:bg-gray-50 transition-colors">
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-4">
@@ -1809,9 +1843,10 @@ const TeacherActivitiesTab = () => {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
         
-        {filteredActivities.length === 0 && (
+        {!loading && filteredActivities.length === 0 && (
           <div className="p-6 text-center">
             <div className="text-gray-400 text-lg mb-2">📋</div>
             <p className="text-gray-500">No activities found for the selected filters.</p>
@@ -1841,8 +1876,7 @@ const AdminsTab = () => {
   });
 
   const availableRoles = [
-    { value: 'admin', label: 'Administrator' },
-    { value: 'principal', label: 'Principal' }
+    { value: 'admin', label: 'Administrator' }
   ];
 
   useEffect(() => {
@@ -1870,7 +1904,7 @@ const AdminsTab = () => {
       }
       
       console.log('AdminsTab - Extracted users data:', usersData);
-      const adminsData = usersData.filter(user => user.role === 'admin' || user.role === 'principal');
+      const adminsData = usersData.filter(user => user.role === 'admin');
       setAdmins(adminsData);
     } catch (error) {
       console.error('Failed to fetch admins:', error);
@@ -1887,9 +1921,9 @@ const AdminsTab = () => {
     const cleanName = name.toLowerCase().replace(/[^a-z\s]/g, '').trim();
     const nameParts = cleanName.split(' ').filter(part => part.length > 0);
     if (nameParts.length >= 2) {
-      return `${nameParts[0]}.${nameParts[nameParts.length - 1]}`;
+      return `${nameParts[0]}.${nameParts[nameParts.length - 1]}.holychild`;
     } else if (nameParts.length === 1) {
-      return `${nameParts[0]}`;
+      return `${nameParts[0]}.holychild`;
     }
     return '';
   };
@@ -2062,7 +2096,7 @@ const AdminsTab = () => {
                 type="email"
                 value={newAdmin.email}
                 onChange={(e) => handleAdminChange('email', e.target.value)}
-                placeholder="admin@tgcra.edu.ng"
+                placeholder="admin@holychild.edu.ng"
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
                 style={{ '--tw-ring-color': COLORS.primary.red }}
               />
@@ -2247,7 +2281,7 @@ const AdminsTab = () => {
       />
 
       {/* Statistics */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white p-4 rounded-lg shadow border">
           <div className="flex items-center">
             <div className="p-2 bg-purple-100 rounded-lg">
@@ -2261,26 +2295,13 @@ const AdminsTab = () => {
         </div>
         <div className="bg-white p-4 rounded-lg shadow border">
           <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <span className="text-purple-600 text-lg">👑</span>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Principals</p>
-              <p className="text-lg font-semibold text-gray-900">
-                {admins.filter(admin => admin.role === 'principal').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow border">
-          <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
               <span className="text-blue-600 text-lg">⚙️</span>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Administrators</p>
+              <p className="text-sm font-medium text-gray-600">Active Administrators</p>
               <p className="text-lg font-semibold text-gray-900">
-                {admins.filter(admin => admin.role === 'admin').length}
+                {admins.filter(admin => admin.is_active).length}
               </p>
             </div>
           </div>

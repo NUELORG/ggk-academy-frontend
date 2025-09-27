@@ -1,20 +1,20 @@
-// TGCRA Result Platform Color Constants
+// Holy Child Result Platform Color Constants
 export const COLORS = {
   // Primary Brand Colors
   primary: {
-    red: '#f30401',      // Main brand red
-    yellow: '#e8bf41',   // Brand yellow/gold
-    blue: '#2335c2',     // Brand blue
+    red: '#fa0001',      // Main brand red
+    blue: '#0201fb',     // Brand blue
+    yellow: '#e8bf41',   // Brand yellow/gold (keeping for accents)
   },
   
   // Extended Color Palette
   secondary: {
-    lightRed: '#ff4444',
-    darkRed: '#cc0300',
+    lightRed: '#ff3333',
+    darkRed: '#cc0000',
     lightYellow: '#f5d76e',
     darkYellow: '#d4a017',
-    lightBlue: '#4a5bc7',
-    darkBlue: '#1a2899',
+    lightBlue: '#3333ff',
+    darkBlue: '#0000cc',
   },
   
   // Neutral Colors
@@ -68,7 +68,7 @@ export const CSS_VARIABLES = {
 // Gradient Combinations
 export const GRADIENTS = {
   primary: `linear-gradient(135deg, ${COLORS.primary.red} 0%, ${COLORS.primary.blue} 100%)`,
-  secondary: `linear-gradient(135deg, ${COLORS.primary.yellow} 0%, ${COLORS.primary.red} 100%)`,
+  secondary: `linear-gradient(135deg, ${COLORS.primary.blue} 0%, ${COLORS.primary.red} 100%)`,
   accent: `linear-gradient(135deg, ${COLORS.primary.blue} 0%, ${COLORS.primary.yellow} 100%)`,
   hero: `linear-gradient(135deg, ${COLORS.primary.red} 0%, ${COLORS.primary.blue} 50%, ${COLORS.primary.yellow} 100%)`,
 };

@@ -21,9 +21,9 @@ const StudentResults = () => {
   };
 
   const schoolInfo = {
-    name: 'TGCRA Secondary School',
-    logo: '/images/logo.png',
-    address: 'Plot 12, Education Crescent, Victoria Island, Lagos, Nigeria',
+    name: 'Holy Child School',
+    logo: '/images/holyChildLogo.jpeg',
+    address: '',
   };
 
   const terms = Object.keys(results).length > 0 ? Object.keys(results) : ['First Term', 'Second Term', 'Third Term'];

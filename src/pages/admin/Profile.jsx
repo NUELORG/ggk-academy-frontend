@@ -413,27 +413,46 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
-                My Profile
-              </h1>
-              <p className="text-xl text-gray-600">
-                Manage your personal information and account settings
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
+            <div className="flex-1">
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <User className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-4xl font-bold text-gray-900 bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
+                    My Profile
+                  </h1>
+                  <p className="text-lg text-gray-600 mt-1">
+                    Welcome back, {getFullName()}!
+                  </p>
+                </div>
+              </div>
+              <p className="text-xl text-gray-600 max-w-2xl">
+                Manage your personal information, account settings, and preferences all in one place.
               </p>
             </div>
             {!isEditing && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                <Edit className="mr-2 h-5 w-5" />
-                Edit Profile
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setShowPasswordForm(true)}
+                  className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                >
+                  <Key className="mr-2 h-5 w-5" />
+                  Change Password
+                </button>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                >
+                  <Edit className="mr-2 h-5 w-5" />
+                  Edit Profile
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -441,48 +460,56 @@ const Profile = () => {
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
           {/* Left Column - Profile Card */}
           <div className="xl:col-span-1">
-            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 hover:shadow-3xl transition-all duration-300">
               {/* Profile Header */}
-              <div className="relative h-40 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600">
-                <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-                <div className="absolute bottom-4 left-4">
+              <div className="relative h-48 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+                <div className="absolute top-4 right-4">
+                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                </div>
+                <div className="absolute bottom-6 left-6">
                   <div className="relative">
-                    <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center shadow-2xl border-4 border-white ring-4 ring-blue-100">
-                      <span className="text-3xl font-bold text-gray-600">
+                    <div className="w-32 h-32 bg-white rounded-2xl flex items-center justify-center shadow-2xl border-4 border-white ring-4 ring-blue-100/50 backdrop-blur-sm">
+                      <span className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                         {getInitials()}
                       </span>
+                    </div>
+                    <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                      <div className="w-3 h-3 bg-white rounded-full"></div>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Profile Info */}
-              <div className="p-6 pt-24">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <div className="p-6 pt-28">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-3">
                     {getFullName()}
                   </h2>
-                  <div className="flex items-center justify-center space-x-2 mb-3">
-                    <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-white bg-gradient-to-r ${getRoleColor(user.role)} shadow-lg`}>
+                  <div className="flex flex-col items-center space-y-3 mb-4">
+                    <span className={`inline-flex items-center px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-gradient-to-r ${getRoleColor(user.role)} shadow-lg`}>
                       <Shield className="mr-2 h-4 w-4" />
                       {getRoleLabel(user.role)}
                     </span>
                     {profileData.is_form_teacher && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                        <Star className="mr-1 h-3 w-3" />
+                      <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200 shadow-sm">
+                        <Star className="mr-2 h-4 w-4" />
                         Form Teacher
                       </span>
                     )}
                   </div>
+                  <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
                 </div>
 
                 {/* Quick Stats */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+                <div className="space-y-3">
+                  <div className="group flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:shadow-md transition-all duration-200">
                     <div className="flex items-center">
-                      <Mail className="h-5 w-5 text-blue-600 mr-3" />
-                      <span className="text-sm text-gray-600">Email</span>
+                      <div className="p-2 bg-blue-100 rounded-lg mr-3 group-hover:bg-blue-200 transition-colors">
+                        <Mail className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">Email</span>
                     </div>
                     <span className="text-sm font-medium text-gray-900 truncate ml-2 max-w-32">
                       {profileData.email || 'N/A'}
@@ -490,10 +517,12 @@ const Profile = () => {
                   </div>
                   
                   {profileData.phone && (
-                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
+                    <div className="group flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100 hover:shadow-md transition-all duration-200">
                       <div className="flex items-center">
-                        <Phone className="h-5 w-5 text-green-600 mr-3" />
-                        <span className="text-sm text-gray-600">Phone</span>
+                        <div className="p-2 bg-green-100 rounded-lg mr-3 group-hover:bg-green-200 transition-colors">
+                          <Phone className="h-4 w-4 text-green-600" />
+                        </div>
+                        <span className="text-sm font-medium text-gray-700">Phone</span>
                       </div>
                       <span className="text-sm font-medium text-gray-900">
                         {profileData.phone}
@@ -502,10 +531,12 @@ const Profile = () => {
                   )}
 
                   {profileData.department && (
-                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100">
+                    <div className="group flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100 hover:shadow-md transition-all duration-200">
                       <div className="flex items-center">
-                        <Briefcase className="h-5 w-5 text-purple-600 mr-3" />
-                        <span className="text-sm text-gray-600">Department</span>
+                        <div className="p-2 bg-purple-100 rounded-lg mr-3 group-hover:bg-purple-200 transition-colors">
+                          <Briefcase className="h-4 w-4 text-purple-600" />
+                        </div>
+                        <span className="text-sm font-medium text-gray-700">Department</span>
                       </div>
                       <span className="text-sm font-medium text-gray-900">
                         {profileData.department}
@@ -514,10 +545,12 @@ const Profile = () => {
                   )}
 
                   {profileData.date_joined && (
-                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-100">
+                    <div className="group flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-100 hover:shadow-md transition-all duration-200">
                       <div className="flex items-center">
-                        <Calendar className="h-5 w-5 text-orange-600 mr-3" />
-                        <span className="text-sm text-gray-600">Joined</span>
+                        <div className="p-2 bg-orange-100 rounded-lg mr-3 group-hover:bg-orange-200 transition-colors">
+                          <Calendar className="h-4 w-4 text-orange-600" />
+                        </div>
+                        <span className="text-sm font-medium text-gray-700">Joined</span>
                       </div>
                       <span className="text-sm font-medium text-gray-900">
                         {new Date(profileData.date_joined).toLocaleDateString()}
@@ -527,21 +560,25 @@ const Profile = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-6 space-y-3">
-                  <button
-                    onClick={() => setShowPasswordForm(true)}
-                    className="w-full inline-flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
-                  >
-                    <Key className="mr-2 h-4 w-4" />
-                    Change Password
-                  </button>
+                <div className="mt-8 space-y-3">
+                  {!isEditing && (
+                    <button
+                      onClick={() => setShowPasswordForm(true)}
+                      className="w-full inline-flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5 group"
+                    >
+                      <div className="p-1 bg-gray-100 rounded-lg mr-3 group-hover:bg-gray-200 transition-colors">
+                        <Key className="h-4 w-4 text-gray-600" />
+                      </div>
+                      Change Password
+                    </button>
+                  )}
                   
                   {isEditing && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <button
                         onClick={handleSaveProfile}
                         disabled={isLoading}
-                        className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent rounded-xl text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent rounded-xl text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 group"
                       >
                         {isLoading ? (
                           <>
@@ -550,7 +587,9 @@ const Profile = () => {
                           </>
                         ) : (
                           <>
-                            <Save className="mr-2 h-4 w-4" />
+                            <div className="p-1 bg-white/20 rounded-lg mr-2 group-hover:bg-white/30 transition-colors">
+                              <Save className="h-4 w-4" />
+                            </div>
                             Save Changes
                           </>
                         )}
@@ -558,9 +597,11 @@ const Profile = () => {
                       
                       <button
                         onClick={handleCancelEdit}
-                        className="w-full inline-flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
+                        className="w-full inline-flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5 group"
                       >
-                        <X className="mr-2 h-4 w-4" />
+                        <div className="p-1 bg-gray-100 rounded-lg mr-2 group-hover:bg-gray-200 transition-colors">
+                          <X className="h-4 w-4 text-gray-600" />
+                        </div>
                         Cancel
                       </button>
                     </div>
@@ -573,12 +614,17 @@ const Profile = () => {
           {/* Right Column - Main Content */}
           <div className="xl:col-span-3 space-y-8">
             {/* Personal Information */}
-            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
-              <div className="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50">
-                <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-                  <User className="mr-3 h-6 w-6 text-blue-600" />
-                  Personal Information
-                </h3>
+            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 hover:shadow-3xl transition-all duration-300">
+              <div className="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 via-blue-50 to-indigo-50">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-gray-900 flex items-center">
+                    <div className="p-2 bg-blue-100 rounded-xl mr-3">
+                      <User className="h-6 w-6 text-blue-600" />
+                    </div>
+                    Personal Information
+                  </h3>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                </div>
               </div>
               
               <div className="p-8">
@@ -593,11 +639,13 @@ const Profile = () => {
                           type="text"
                           value={editData.name}
                           onChange={(e) => handleEditChange('name', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 shadow-sm"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                           placeholder="Enter full name"
                         />
                       ) : (
-                        <p className="text-gray-900 font-medium text-lg">{profileData.name || 'N/A'}</p>
+                        <div className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-100">
+                          <p className="text-gray-900 font-medium text-lg">{profileData.name || 'N/A'}</p>
+                        </div>
                       )}
                     </div>
                   ) : (
@@ -615,7 +663,9 @@ const Profile = () => {
                             placeholder="Enter first name"
                           />
                         ) : (
-                          <p className="text-gray-900 font-medium text-lg">{profileData.first_name || 'N/A'}</p>
+                          <div className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-100">
+                            <p className="text-gray-900 font-medium text-lg">{profileData.first_name || 'N/A'}</p>
+                          </div>
                         )}
                       </div>
 
@@ -632,7 +682,9 @@ const Profile = () => {
                             placeholder="Enter last name"
                           />
                         ) : (
-                          <p className="text-gray-900 font-medium text-lg">{profileData.last_name || 'N/A'}</p>
+                          <div className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-100">
+                            <p className="text-gray-900 font-medium text-lg">{profileData.last_name || 'N/A'}</p>
+                          </div>
                         )}
                       </div>
                     </>
@@ -711,7 +763,9 @@ const Profile = () => {
                         placeholder="Enter phone number"
                       />
                     ) : (
-                      <p className="text-gray-900 font-medium text-lg">{profileData.phone || 'N/A'}</p>
+                      <div className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-100">
+                        <p className="text-gray-900 font-medium text-lg">{profileData.phone || 'N/A'}</p>
+                      </div>
                     )}
                   </div>
 
@@ -728,7 +782,9 @@ const Profile = () => {
                         placeholder="Enter email address"
                       />
                     ) : (
-                      <p className="text-gray-900 font-medium text-lg">{profileData.email || 'N/A'}</p>
+                      <div className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-100">
+                        <p className="text-gray-900 font-medium text-lg">{profileData.email || 'N/A'}</p>
+                      </div>
                     )}
                   </div>
 
@@ -745,7 +801,9 @@ const Profile = () => {
                         placeholder="Enter address"
                       />
                     ) : (
-                      <p className="text-gray-900 font-medium text-lg">{profileData.address || 'N/A'}</p>
+                      <div className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-100">
+                        <p className="text-gray-900 font-medium text-lg">{profileData.address || 'N/A'}</p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -861,9 +919,9 @@ const Profile = () => {
 
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
                 <div className="flex items-center">
-                  <div className="p-3 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl">
+                  <div className="p-3 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl group-hover:from-blue-200 group-hover:to-blue-300 transition-all duration-300">
                     <User className="h-6 w-6 text-blue-600" />
                   </div>
                   <div className="ml-4">
@@ -874,9 +932,9 @@ const Profile = () => {
               </div>
 
               {profileData.subjects?.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-green-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-green-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
                   <div className="flex items-center">
-                    <div className="p-3 bg-gradient-to-r from-green-100 to-green-200 rounded-xl">
+                    <div className="p-3 bg-gradient-to-r from-green-100 to-green-200 rounded-xl group-hover:from-green-200 group-hover:to-green-300 transition-all duration-300">
                       <BookOpen className="h-6 w-6 text-green-600" />
                     </div>
                     <div className="ml-4">
@@ -888,9 +946,9 @@ const Profile = () => {
               )}
 
               {profileData.classes?.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-purple-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-purple-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
                   <div className="flex items-center">
-                    <div className="p-3 bg-gradient-to-r from-purple-100 to-purple-200 rounded-xl">
+                    <div className="p-3 bg-gradient-to-r from-purple-100 to-purple-200 rounded-xl group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300">
                       <School className="h-6 w-6 text-purple-600" />
                     </div>
                     <div className="ml-4">
@@ -901,9 +959,9 @@ const Profile = () => {
                 </div>
               )}
 
-              <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-orange-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-orange-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
                 <div className="flex items-center">
-                  <div className="p-3 bg-gradient-to-r from-orange-100 to-orange-200 rounded-xl">
+                  <div className="p-3 bg-gradient-to-r from-orange-100 to-orange-200 rounded-xl group-hover:from-orange-200 group-hover:to-orange-300 transition-all duration-300">
                     <Clock className="h-6 w-6 text-orange-600" />
                   </div>
                   <div className="ml-4">

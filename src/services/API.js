@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
 class API {
     constructor() {
@@ -334,7 +334,7 @@ class API {
         });
     }
 
-    async updateStudent(studentId, studentData) {
+    async updateTeacherStudent(studentId, studentData) {
         return await this.request(`/teacher/students/${studentId}`, {
             method: 'PUT',
             body: JSON.stringify(studentData),

@@ -267,27 +267,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Alerts */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <AlertCircle className="h-5 w-5 text-yellow-400" />
-          </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-yellow-800">
-              Attention needed
-            </h3>
-            <div className="mt-2 text-sm text-yellow-700">
-              <p>
-                3 classes haven't submitted their mid-term results yet. 
-                <a href="#" className="font-medium underline text-yellow-700 hover:text-yellow-600">
-                  View pending submissions
-                </a>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
