@@ -15,9 +15,6 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       host: true,
     },
-    define: {
-      // Make environment variables available to the app
-      'process.env': env
-    }
+    
   }
 })

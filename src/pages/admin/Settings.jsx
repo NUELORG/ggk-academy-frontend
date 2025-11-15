@@ -12,7 +12,7 @@ import {
   Shield,
   Eye,
   EyeOff,
-  Calendar,
+  Calendar, 
   Clock,
   CheckCircle,
   XCircle,
@@ -88,7 +88,7 @@ const Settings = () => {
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+        <nav className="-mb-px flex space-x-8 overflow-x-auto py-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -96,7 +96,7 @@ const Settings = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  group inline-flex items-center py-2 px-1 border-b-2 font-medium text-sm
+                  group inline-flex items-center py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap
                   ${activeTab === tab.id
                     ? 'border-red-500 text-red-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -384,7 +384,7 @@ const ClassesTab = () => {
           <span className="ml-2 text-gray-600">Loading classes...</span>
         </div>
       ) : (
-        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+        <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
           <table className="min-w-full divide-y divide-gray-300">
             <thead className="bg-gray-50">
               <tr>
@@ -778,7 +778,7 @@ const SubjectsTab = () => {
           <span className="ml-2 text-gray-600">Loading subjects...</span>
         </div>
       ) : (
-        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+        <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
           <table className="min-w-full divide-y divide-gray-300">
             <thead className="bg-gray-50">
               <tr>
@@ -1443,7 +1443,7 @@ const TeachersTab = () => {
           <span className="ml-2 text-gray-600">Loading teachers...</span>
         </div>
       ) : (
-        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+        <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
           <table className="min-w-full divide-y divide-gray-300">
             <thead className="bg-gray-50">
               <tr>
@@ -2201,7 +2201,7 @@ const AdminsTab = () => {
           <span className="ml-2 text-gray-600">Loading administrators...</span>
         </div>
       ) : (
-        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+        <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
           <table className="min-w-full divide-y divide-gray-300">
             <thead className="bg-gray-50">
               <tr>
