@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { 
   User, 
   Mail, 
@@ -15,12 +16,12 @@ import {
   UserCircle,
   Settings
 } from 'lucide-react';
-import { useNotification } from '../../contexts/NotificationContext';
-import { useAuth } from '../../contexts/AuthContext';
-import API from '../../services/API';
-import { COLORS } from '../../constants/colors';
+import { useNotification } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
+import API from '../services/API';
+import { COLORS } from '../constants/colors';
 
-const AdminProfile = () => {
+const UserProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +29,11 @@ const AdminProfile = () => {
   const [loading, setLoading] = useState(true);
   const { showError, showSuccess } = useNotification();
   const { user, updateUser } = useAuth();
+
+  // Redirect teachers to their own profile page
+  if (user?.role === 'teacher') {
+    return <Navigate to="/teacher/profile" replace />;
+  }
 
   const [profileData, setProfileData] = useState({
     name: '',
@@ -772,5 +778,4 @@ const AdminProfile = () => {
   );
 };
 
-export default AdminProfile;
-
+export default UserProfile;

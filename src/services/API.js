@@ -75,6 +75,35 @@ class API {
             debug.apiResponse(url, response.status, data);
 
             if (!response.ok) {
+                // Handle 401 Unauthenticated errors - redirect to login
+                if (response.status === 401) {
+                    // Clear authentication data
+                    this.clearToken();
+                    localStorage.removeItem('user');
+                    
+                    // Determine which login page to redirect to based on current path
+                    const currentPath = window.location.pathname;
+                    let loginPath = '/auth/admin/login';
+                    
+                    if (currentPath.startsWith('/student')) {
+                        loginPath = '/auth/student/login';
+                    } else if (currentPath.startsWith('/teacher') || currentPath.startsWith('/admin')) {
+                        loginPath = '/auth/admin/login';
+                    }
+                    
+                    // Redirect to login page
+                    window.location.href = loginPath;
+                    
+                    // Create error object for any error handlers that might catch it
+                    const error = new Error('Unauthenticated. Please log in again.');
+                    error.response = {
+                        data: { message: 'Unauthenticated. Please log in again.' },
+                        status: 401,
+                        statusText: 'Unauthenticated'
+                    };
+                    throw error;
+                }
+                
                 // Create error object that matches expected structure
                 const errorMessage = data.message || data.error || `The route ${url} could not be found.` || 'Something went wrong';
                 const error = new Error(errorMessage);

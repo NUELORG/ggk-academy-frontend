@@ -62,7 +62,7 @@ const AdminLayout = () => {
       { name: 'Attendance Analysis', href: '/admin/attendance-analysis', icon: Calendar },
       { name: 'Settings', href: '/admin/settings', icon: Settings }
     ] : []),
-    { name: 'Profile', href: '/admin/profile', icon: User },
+    { name: 'Profile', href: user?.role === 'teacher' ? '/teacher/profile' : '/admin/profile', icon: User },
   ];
 
   const handleLogout = () => {

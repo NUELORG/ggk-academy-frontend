@@ -47,7 +47,10 @@ const AdminDashboard = () => {
       const response = await API.getAdminDashboard();
       setDashboardData(response.data);
     } catch (error) {
-      showError(error.message || 'Failed to load dashboard data');
+      // Don't show error for 401 - user will be redirected to login
+      if (error.response?.status !== 401) {
+        showError(error.message || 'Failed to load dashboard data');
+      }
     } finally {
       setLoading(false);
     }

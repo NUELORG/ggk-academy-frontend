@@ -20,7 +20,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import API from '../../services/API';
 import { COLORS } from '../../constants/colors';
 
-const AdminProfile = () => {
+const UserProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -772,5 +772,4 @@ const AdminProfile = () => {
   );
 };
 
-export default AdminProfile;
-
+export default UserProfile;

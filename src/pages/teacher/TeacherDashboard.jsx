@@ -46,8 +46,11 @@ const TeacherDashboard = () => {
       setDashboardData(dashboardResponse.data);
       setFormTeacherClasses(formTeacherResponse.data || formTeacherResponse);
     } catch (error) {
-      console.error('Dashboard fetch error:', error);
-      showError(error.message || 'Failed to load dashboard data');
+      // Don't show error for 401 - user will be redirected to login
+      if (error.response?.status !== 401) {
+        console.error('Dashboard fetch error:', error);
+        showError(error.message || 'Failed to load dashboard data');
+      }
     } finally {
       setLoading(false);
     }
@@ -405,7 +408,7 @@ const TeacherDashboard = () => {
             </button>
               
             <button 
-              onClick={() => navigate('/admin/profile')}
+              onClick={() => navigate('/teacher/profile')}
                 className="group p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-purple-300 hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200"
               >
                 <div className="text-center">

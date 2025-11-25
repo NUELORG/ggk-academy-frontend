@@ -665,28 +665,28 @@ const Students = () => {
                           <FileText className="h-4 w-4" />
                         </button>
                         {canManageStudent(student) && (
-                          <>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditStudent(student);
-                              }}
-                              className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                              title="Edit Student"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openDeleteModal(student);
-                              }}
-                              className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                              title="Delete student"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditStudent(student);
+                            }}
+                            className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                            title="Edit Student"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                        )}
+                        {isAdmin && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openDeleteModal(student);
+                            }}
+                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                            title="Delete student"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         )}
                       </div>
                     </div>
@@ -846,28 +846,28 @@ const Students = () => {
                             <FileText className="h-4 w-4" />
                           </button>
                           {canManageStudent(student) && (
-                            <>
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditStudent(student);
-                                }}
-                                className="text-indigo-600 hover:text-indigo-900 transition-colors"
-                                title="Edit Student"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openDeleteModal(student);
-                                }}
-                                className="text-red-600 hover:text-red-900 transition-colors"
-                                title="Delete student"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditStudent(student);
+                              }}
+                              className="text-indigo-600 hover:text-indigo-900 transition-colors"
+                              title="Edit Student"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                          )}
+                          {isAdmin && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDeleteModal(student);
+                              }}
+                              className="text-red-600 hover:text-red-900 transition-colors"
+                              title="Delete student"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           )}
                         </div>
                       </td>

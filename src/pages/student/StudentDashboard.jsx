@@ -21,6 +21,29 @@ const StudentDashboard = () => {
     }
   }, [user]);
 
+  // Refresh dashboard data periodically and on focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        fetchDashboardData();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    
+    // Refresh every 30 seconds
+    const interval = setInterval(() => {
+      if (user && document.hasFocus()) {
+        fetchDashboardData();
+      }
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(interval);
+    };
+  }, [user]);
+
   const fetchSessionInfo = async () => {
     try {
       const response = await API.getCurrentAcademicSession();
@@ -37,7 +60,10 @@ const StudentDashboard = () => {
       const response = await API.getStudentDashboard();
       setDashboardData(response.data);
     } catch (error) {
-      showError(error.response?.data?.message || 'Failed to load dashboard data');
+      // Don't show error for 401 - user will be redirected to login
+      if (error.response?.status !== 401) {
+        showError(error.response?.data?.message || 'Failed to load dashboard data');
+      }
     } finally {
       setLoading(false);
     }

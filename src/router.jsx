@@ -44,7 +44,7 @@ import ManageScores from './pages/admin/ManageScores';
 import Classes from './pages/admin/Classes';
 import Results from './pages/admin/Results';
 import Settings from './pages/admin/Settings';
-import AdminProfile from './pages/admin/AdminProfile';
+import UserProfile from './pages/UserProfile';
 import AttendanceAnalysis from './pages/admin/AttendanceAnalysis';
 
 // Teacher pages
@@ -207,7 +207,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'profile',
-        element: <AdminProfile />,
+        element: <UserProfile />,
       },
     ],
   },

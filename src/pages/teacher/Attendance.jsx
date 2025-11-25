@@ -3,13 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import API from '../../services/API';
 import { useNotification } from '../../contexts/NotificationContext';
 import { COLORS } from '../../constants/colors';
-import { CheckCircle2, XCircle, Clock, FileText, Calendar, ChevronDown } from 'lucide-react';
+import { 
+  CheckCircle2, 
+  Clock, 
+  Calendar, 
+  Users, 
+  School, 
+  BookOpen, 
+  Save,
+  RefreshCw
+} from 'lucide-react';
 import debug from '../../utils/debug';
 
 const Attendance = () => {
     const navigate = useNavigate();
     const { showSuccess, showError } = useNotification();
     
+    // --- STATE MANAGEMENT ---
     const [loading, setLoading] = useState(true);
     const [currentSession, setCurrentSession] = useState(null);
     const [currentTerm, setCurrentTerm] = useState(null);
@@ -17,159 +27,157 @@ const Attendance = () => {
     const [selectedClass, setSelectedClass] = useState(null);
     const [selectedSubject, setSelectedSubject] = useState(null);
     const [students, setStudents] = useState([]);
+    
+    // Time States
     const [week, setWeek] = useState(1);
     const [day, setDay] = useState('Monday');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [attendanceStatus, setAttendanceStatus] = useState({}); // { studentId: 'present' | 'absent' | 'late' | 'excused' }
+    
+    // Attendance Data
+    const [attendanceStatus, setAttendanceStatus] = useState({}); 
     const [remarks, setRemarks] = useState({});
     const [submitting, setSubmitting] = useState(false);
-    const [attendanceRecords, setAttendanceRecords] = useState(null);
+    
+    // CACHE STATE: Holds the raw data for the current selected Week
+    const [weekRecords, setWeekRecords] = useState([]); 
     const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
     const [fetchingRecords, setFetchingRecords] = useState(false);
 
-    // Use refs to track current filter values to prevent race conditions
+    // --- REFS ---
+    // Used to prevent race conditions during async calls
     const filterRef = useRef({
         classId: null,
         subjectId: null,
         week: null,
-        day: null,
-        date: null,
         sessionId: null,
         term: null
     });
     
-    // Use ref to prevent concurrent fetches without causing dependency loops
-    const fetchingRef = useRef(false);
-
     const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-    // Normalize date helper - memoized to prevent recreating
+    // --- HELPERS ---
     const normalizeDate = useCallback((dateStr) => {
         if (!dateStr) return null;
-        // If already in Y-m-d format, return as is
-        if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-            return dateStr;
-        }
-        // If it's a Date object or ISO string, extract Y-m-d
-        if (dateStr instanceof Date) {
-            return dateStr.toISOString().split('T')[0];
-        }
-        if (typeof dateStr === 'string') {
-            return dateStr.split('T')[0];
-        }
+        if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+        if (dateStr instanceof Date) return dateStr.toISOString().split('T')[0];
+        if (typeof dateStr === 'string') return dateStr.split('T')[0];
         return dateStr;
     }, []);
 
-    // Initial load
+    // --- CALCULATED STATS ---
+    const stats = useMemo(() => {
+        const total = students.length;
+        const present = Object.values(attendanceStatus).filter(s => s === 'present').length;
+        const absent = Object.values(attendanceStatus).filter(s => s === 'absent').length;
+        const late = Object.values(attendanceStatus).filter(s => s === 'late').length;
+        
+        const percent = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
+        return { total, present, absent, late, percent };
+    }, [attendanceStatus, students.length]);
+
+    // --- INITIAL LOAD ---
     useEffect(() => {
         fetchCurrentSession();
         fetchClasses();
     }, []);
 
-    // Update filter ref whenever filters change
+    // --- 1. FETCH LOGIC (Runs only when Class, Subject, or Week changes) ---
     useEffect(() => {
-        filterRef.current = {
-            classId: selectedClass?.id || null,
-            subjectId: selectedSubject?.id || null,
-            week: week || null,
-            day: day || null,
-            date: normalizeDate(date),
-            sessionId: currentSession?.id || null,
-            term: currentTerm?.name || null
-        };
-    }, [selectedClass?.id, selectedSubject?.id, week, day, date, currentSession?.id, currentTerm?.name, normalizeDate]);
+        if (selectedClass?.id && selectedSubject?.id && currentSession?.id && week) {
+            fetchWeekRecords();
+        } else {
+            setWeekRecords([]);
+        }
+    }, [selectedClass?.id, selectedSubject?.id, week, currentSession?.id, currentTerm?.name]);
 
-    // Fetch students when class/subject changes
+    // --- 2. STUDENT FETCH LOGIC ---
     useEffect(() => {
         if (selectedClass?.id && selectedSubject?.id) {
             fetchStudents();
-            // Reset states when class/subject changes
-            setIsAttendanceMarked(false);
-            setAttendanceRecords(null);
-            setAttendanceStatus({});
-            setRemarks({});
         } else {
             setStudents([]);
-            setAttendanceStatus({});
-            setRemarks({});
-            setIsAttendanceMarked(false);
         }
     }, [selectedClass?.id, selectedSubject?.id]);
 
-    // Reset attendance marked status when day/week/date changes
+    // --- 3. UI SYNC LOGIC (The "Instant" Part) ---
+    // This runs immediately when Day/Date changes OR when new Week Records arrive OR when Students load.
     useEffect(() => {
-        if (selectedClass?.id && selectedSubject?.id && students.length > 0) {
-            // Reset the marked status when filters change
-            setIsAttendanceMarked(false);
-            setAttendanceRecords(null);
-            // Reset attendance status to default 'present' for all students
-            const defaultStatus = {};
-            students.forEach(student => {
-                defaultStatus[student.id] = 'present';
-            });
-            setAttendanceStatus(defaultStatus);
-            setRemarks({});
-        }
-    }, [week, day, date, selectedClass?.id, selectedSubject?.id]);
+        if (students.length === 0) return;
 
-    // Check if we have all required data for fetching records
-    const canFetchRecords = useMemo(() => {
-        return !!(
-            filterRef.current.classId &&
-            filterRef.current.subjectId &&
-            filterRef.current.week &&
-            filterRef.current.day &&
-            filterRef.current.date &&
-            filterRef.current.sessionId &&
-            filterRef.current.term &&
-            students.length > 0
-        );
-    }, [students.length]);
+        const normalizedCurrentDate = normalizeDate(date);
+        const normalizedCurrentDay = day.trim();
+        const normalizedWeek = Number(week);
+
+        let markedForToday = false;
+        const statusMap = {};
+        const remarksMap = {};
+
+        // 1. Process the "Cached" Week Records to find a match for TODAY
+        if (weekRecords.length > 0) {
+            for (const record of weekRecords) {
+                if (!record.records || !Array.isArray(record.records)) continue;
+
+                const studentId = record.student_id;
+                
+                // Find the specific record entry for this Day/Date
+                const match = record.records.find(r => {
+                    const rDate = normalizeDate(r.date);
+                    const rWeek = Number(r.week);
+                    const rDay = String(r.day).trim();
+                    
+                    // Match Logic: Check Week AND (Day OR Date)
+                    // We check date strictly if provided, otherwise trust the day string
+                    return rWeek === normalizedWeek && 
+                           (rDate === normalizedCurrentDate && rDay === normalizedCurrentDay);
+                });
+
+                if (match) {
+                    markedForToday = true;
+                    statusMap[studentId] = match.status || 'present';
+                    if (match.remark) remarksMap[studentId] = match.remark;
+                }
+            }
+        }
+
+        // 2. Update UI State Instantly
+        setIsAttendanceMarked(markedForToday);
+
+        const finalStatus = {};
+        const finalRemarks = {};
+
+        students.forEach(student => {
+            // If we found data for today, use it. Otherwise, default to Present.
+            if (markedForToday && statusMap[student.id]) {
+                finalStatus[student.id] = statusMap[student.id];
+                finalRemarks[student.id] = remarksMap[student.id] || '';
+            } else {
+                finalStatus[student.id] = 'present';
+                finalRemarks[student.id] = '';
+            }
+        });
+
+        setAttendanceStatus(finalStatus);
+        setRemarks(finalRemarks);
+
+    }, [weekRecords, day, date, students, week, normalizeDate]); 
+    // ^ Depend only on local data. Changing 'day' triggers this effect, not a network call.
+
+
+    // --- API FUNCTIONS ---
 
     const fetchCurrentSession = async () => {
         try {
             const response = await API.getCurrentAcademicSession();
+            // Handle various response structures
+            const data = response?.data || response;
+            const session = data?.session || data?.academic_session || response?.session;
+            const term = data?.term || response?.term;
             
-            // Backend returns: { session, term, has_session, has_term }
-            // Handle different response structures
-            let session = null;
-            let term = null;
-            
-            if (response?.data) {
-                // If wrapped in data key
-                session = response.data.session || response.data.academic_session;
-                term = response.data.term;
-            } else if (response?.session) {
-                // Direct response structure
-                session = response.session;
-                term = response.term;
-            } else if (response?.academic_session) {
-                // Alternative structure
-                session = response.academic_session;
-                term = response.term;
-            }
-            
-            if (session) {
-                setCurrentSession(session);
-                debug.component('Attendance', 'Session set', { sessionId: session.id });
-            } else {
-                debug.warn('Attendance - No current session found in response');
-            }
-            
-            if (term) {
-                setCurrentTerm(term);
-                debug.component('Attendance', 'Term set', { term: term.name });
-            } else {
-                debug.warn('Attendance - No current term found in response');
-            }
-            
-            // If no session or term, still set loading to false so user can see the error
-            if (!session || !term) {
-                debug.error('Attendance - Missing session or term:', { session: !!session, term: !!term });
-            }
+            if (session) setCurrentSession(session);
+            if (term) setCurrentTerm(term);
         } catch (error) {
-            debug.error('Error fetching current session:', error);
-            showError('Failed to load current academic session. Please contact admin to set the current academic session.');
+            console.error(error);
+            showError('Failed to load session info');
         } finally {
             setLoading(false);
         }
@@ -178,551 +186,367 @@ const Attendance = () => {
     const fetchClasses = async () => {
         try {
             const response = await API.getTeacherAttendanceClasses();
-            // Handle different response structures
-            let classesData = [];
-            if (Array.isArray(response)) {
-                classesData = response;
-            } else if (response?.data) {
-                if (Array.isArray(response.data)) {
-                    classesData = response.data;
-                } else if (response.data?.data && Array.isArray(response.data.data)) {
-                    classesData = response.data.data;
-                }
-            }
-            setClasses(classesData || []);
-        } catch (error) {
-            debug.error('Error fetching classes:', error);
-            showError('Error loading classes');
-            setClasses([]);
-        }
+            const data = Array.isArray(response) ? response : (response?.data?.data || response?.data || []);
+            setClasses(data);
+        } catch (error) { console.error(error); }
     };
 
     const fetchStudents = async () => {
         try {
             const response = await API.getClassStudentsForAttendance(selectedClass.id, selectedSubject.id);
-            // Handle different response structures
-            let studentsList = [];
-            if (Array.isArray(response)) {
-                studentsList = response;
-            } else if (response?.data) {
-                if (Array.isArray(response.data)) {
-                    studentsList = response.data;
-                } else if (response.data?.data && Array.isArray(response.data.data)) {
-                    studentsList = response.data.data;
-                }
-            }
-            
-            setStudents(studentsList);
-            
-            // Don't initialize status here - let fetchAttendanceRecords handle it
-            // This prevents overwriting existing attendance when returning to the page
-        } catch (error) {
-            debug.error('Error fetching students:', error);
-            showError('Error loading students');
-            setStudents([]);
-        }
+            const data = Array.isArray(response) ? response : (response?.data?.data || response?.data || []);
+            setStudents(data);
+        } catch (error) { showError('Error loading students'); }
     };
 
-    const fetchAttendanceRecords = useCallback(async () => {
-        // Validate all required data is present using ref to prevent stale closures
-        const currentFilter = filterRef.current;
+    const fetchWeekRecords = async () => {
+        // Prevent unnecessary calls
+        if (!selectedClass?.id || !selectedSubject?.id || !week || !currentSession?.id) return;
         
-        if (!currentFilter.classId || !currentFilter.subjectId || !currentFilter.week || 
-            !currentFilter.day || !currentFilter.date || !currentFilter.sessionId || !currentFilter.term) {
-            setIsAttendanceMarked(false);
-            setAttendanceRecords(null);
-            return;
-        }
-
-        // Prevent concurrent fetches using a ref to avoid dependency issues
-        if (fetchingRef.current) {
-            debug.component('Attendance', 'fetchAttendanceRecords - Already fetching, skipping');
-            return;
-        }
-        
-        fetchingRef.current = true;
         setFetchingRecords(true);
-        
         try {
             const params = {
-                class_id: currentFilter.classId,
-                subject_id: currentFilter.subjectId,
-                week: currentFilter.week,
-                academic_session_id: currentFilter.sessionId,
-                term: currentFilter.term,
+                class_id: selectedClass.id,
+                subject_id: selectedSubject.id,
+                week: week, // Fetch the WHOLE week
+                academic_session_id: currentSession.id,
+                term: currentTerm?.name,
             };
             
             const response = await API.getAttendanceRecords(params);
+            const records = Array.isArray(response) ? response : (response?.data?.data || response?.data || []);
             
-            // Handle different response structures
-            let recordsData = [];
-            if (Array.isArray(response)) {
-                recordsData = response;
-            } else if (response?.data) {
-                if (Array.isArray(response.data)) {
-                    recordsData = response.data;
-                } else if (response.data?.data && Array.isArray(response.data.data)) {
-                    recordsData = response.data.data;
-                }
-            }
-
-            setAttendanceRecords(recordsData);
-            
-            // Normalize values for comparison
-            const normalizedDate = normalizeDate(currentFilter.date);
-            const normalizedWeek = Number(currentFilter.week);
-            const normalizedDay = String(currentFilter.day).trim();
-            
-            debug.component('Attendance', 'fetchAttendanceRecords - Fetching with params', { params });
-            
-            // Build status and remarks maps from matching records
-            const statusMap = {};
-            const remarksMap = {};
-            let markedForToday = false;
-
-            // Simple, efficient matching logic
-            if (recordsData.length > 0 && students.length > 0) {
-                debug.component('Attendance', 'fetchAttendanceRecords - Checking records', { 
-                    recordsCount: recordsData.length,
-                    studentsCount: students.length
-                });
-
-                for (const record of recordsData) {
-                    if (!record.records || !Array.isArray(record.records)) continue;
-                    
-                    const studentId = record.student_id;
-                    
-                    for (const r of record.records) {
-                        // Normalize record values
-                        const recordDate = normalizeDate(r.date);
-                        const recordWeek = Number(r.week);
-                        const recordDay = String(r.day).trim();
-                        
-                        // Check for exact match
-                        if (recordWeek === normalizedWeek && 
-                            recordDay === normalizedDay && 
-                            recordDate === normalizedDate) {
-                            markedForToday = true;
-                            statusMap[studentId] = r.status || 'present';
-                            if (r.remark) {
-                                remarksMap[studentId] = r.remark;
-                            }
-                        }
-                    }
-                }
-                
-                debug.component('Attendance', 'fetchAttendanceRecords - Records processed', { 
-                    markedForToday,
-                    matchedStudents: Object.keys(statusMap).length
-                });
-            }
-
-            setIsAttendanceMarked(markedForToday);
-            
-            // Apply status and remarks to all students
-            if (students.length > 0) {
-                if (markedForToday && Object.keys(statusMap).length > 0) {
-                    // Use saved status where available, default to 'present' for others
-                    const finalStatusMap = {};
-                    const finalRemarksMap = {};
-                    
-                    students.forEach(student => {
-                        // Prioritize saved status from the map
-                        finalStatusMap[student.id] = statusMap[student.id] || 'present';
-                        if (remarksMap[student.id]) {
-                            finalRemarksMap[student.id] = remarksMap[student.id];
-                        }
-                    });
-                    
-                    debug.component('Attendance', 'fetchAttendanceRecords - Setting final status map', { 
-                      studentsCount: Object.keys(finalStatusMap).length
-                    });
-                    setAttendanceStatus(finalStatusMap);
-                    setRemarks(finalRemarksMap);
-                } else {
-                    // No attendance found - set all to default 'present'
-                    debug.component('Attendance', 'fetchAttendanceRecords - No attendance found, setting defaults');
-                    const defaultStatus = {};
-                    students.forEach(student => {
-                        defaultStatus[student.id] = 'present';
-                    });
-                    setAttendanceStatus(defaultStatus);
-                    setRemarks({});
-                }
-            }
+            setWeekRecords(records); // Store in "Cache"
         } catch (error) {
-            debug.error('Error fetching attendance records:', error);
-            setIsAttendanceMarked(false);
-            setAttendanceRecords(null);
-            showError('Failed to load attendance records');
+            console.error('Fetch error:', error);
+            // Don't clear records on error, might just be network blip
+            showError('Failed to refresh records');
         } finally {
-            fetchingRef.current = false;
             setFetchingRecords(false);
         }
-    }, [students, normalizeDate, showError]);
+    };
 
-    // Fetch attendance records when all conditions are met
-    useEffect(() => {
-        // Check ref instead of state to avoid dependency loop
-        if (canFetchRecords && !fetchingRef.current) {
-            // Use a small delay to batch rapid changes
-            const timer = setTimeout(() => {
-                fetchAttendanceRecords();
-            }, 150);
-            return () => clearTimeout(timer);
-        } else if (!canFetchRecords) {
-            setIsAttendanceMarked(false);
-            setAttendanceRecords(null);
+    const handleSubmit = useCallback(async () => {
+        if (!selectedClass?.id || !selectedSubject?.id || !date) {
+            showError('Please check all fields.');
+            return;
         }
-    }, [canFetchRecords, fetchAttendanceRecords]); // fetchAttendanceRecords is defined above
 
-    const handleStatusChange = (studentId, status) => {
-        setAttendanceStatus(prev => ({
-            ...prev,
-            [studentId]: status
-        }));
+        setSubmitting(true);
+        try {
+            const attendances = students.map(student => ({
+                student_id: student.id,
+                status: attendanceStatus[student.id] || 'present',
+                remark: remarks[student.id] || null,
+            }));
+
+            const payload = {
+                class_id: selectedClass.id,
+                subject_id: selectedSubject.id,
+                week: week,
+                day: day,
+                date: date,
+                attendances: attendances,
+            };
+
+            await API.markAttendance(payload);
+            showSuccess(`Attendance marked for ${day}`);
+            
+            // Refresh the "Cache" (Week Records) so the UI updates to "Marked" immediately
+            await fetchWeekRecords();
+            
+        } catch (error) {
+            showError(error.message || 'Error saving attendance');
+        } finally {
+            setSubmitting(false);
+        }
+    }, [selectedClass, selectedSubject, week, day, date, students, attendanceStatus, remarks]);
+
+    // --- UI RENDER HELPERS ---
+    const getStatusColor = (status) => {
+        switch(status) {
+            case 'present': return 'bg-green-50 text-green-700 border-green-200';
+            case 'absent': return 'bg-red-50 text-red-700 border-red-200';
+            case 'late': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+            case 'excused': return 'bg-blue-50 text-blue-700 border-blue-200';
+            default: return 'bg-gray-50 text-gray-700 border-gray-200';
+        }
     };
-
-    const handleRemarkChange = (studentId, remark) => {
-        setRemarks(prev => ({
-            ...prev,
-            [studentId]: remark
-        }));
-    };
-
-   const handleSubmit = useCallback(async () => {
-    // Use filterRef as primary source, fallback to state
-    const filterData = {
-        classId: filterRef.current.classId || selectedClass?.id,
-        subjectId: filterRef.current.subjectId || selectedSubject?.id,
-        week: filterRef.current.week || week,
-        day: filterRef.current.day || day,
-        date: filterRef.current.date || date,
-        sessionId: filterRef.current.sessionId || currentSession?.id,
-        term: filterRef.current.term || currentTerm?.name
-    };
-    
-    // Simple state-based validation
-    if (!filterData.classId || !filterData.subjectId || !filterData.week || 
-        !filterData.day || !filterData.date || !filterData.sessionId || !filterData.term) {
-        const missingFields = Object.entries(filterData).filter(([k,v]) => !v).map(([k]) => k);
-        debug.error('Attendance - Missing required fields:', { missingFields });
-        showError(`Please fill all required fields. Missing: ${missingFields.join(', ')}`);
-        return;
-    }
-
-    if (students.length === 0) {
-        showError('No students to mark attendance for');
-        return;
-    }
-
-    setSubmitting(true);
-    try {
-        const attendances = students.map(student => ({
-            student_id: student.id,
-            status: attendanceStatus[student.id] || 'present',
-            remark: remarks[student.id] || null,
-        }));
-
-        const response = await API.markAttendance({
-            class_id: filterData.classId,
-            subject_id: filterData.subjectId,
-            week: filterData.week,
-            day: filterData.day,
-            date: filterData.date,
-            attendances: attendances,
-        });
-
-        const successMsg = response?.message || `Attendance marked successfully for ${filterData.day}, Week ${filterData.week}`;
-        showSuccess(successMsg);
-        
-        // Update filterRef with latest values before refreshing
-        filterRef.current = {
-            classId: filterData.classId,
-            subjectId: filterData.subjectId,
-            week: filterData.week,
-            day: filterData.day,
-            date: filterData.date,
-            sessionId: filterData.sessionId,
-            term: filterData.term
-        };
-        
-        await fetchAttendanceRecords();
-        setIsAttendanceMarked(true);
-    } catch (error) {
-        debug.error('Error marking attendance:', error);
-        showError(error.message || 'Error marking attendance');
-    } finally {
-        setSubmitting(false);
-    }
-}, [selectedClass, selectedSubject, week, day, date, currentSession, currentTerm, students, attendanceStatus, remarks, showSuccess, showError, fetchAttendanceRecords]);
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: COLORS.primary.red }}></div>
-                    <p className="text-gray-600">Loading...</p>
-                </div>
+            <div className="flex flex-col items-center justify-center h-96">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 mb-4" style={{ borderColor: COLORS.primary.red }}></div>
+                <p className="text-gray-500 font-medium">Loading portal...</p>
             </div>
         );
     }
 
-    // Show error if no session/term is set (after loading completes)
     if (!currentSession || !currentTerm) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
-                    <div className="mb-4">
-                        <Calendar className="h-16 w-16 mx-auto text-red-500" />
-                    </div>
-                    <h2 className="text-2xl font-bold mb-4" style={{ color: COLORS.primary.red }}>
-                        Academic Session Not Set
-                    </h2>
-                    <p className="text-gray-600 mb-6">
-                        No current academic session or term has been configured. Please contact your administrator to set up the current academic session and term before marking attendance.
-                    </p>
-                    <button
-                        onClick={() => navigate('/admin/settings')}
-                        className="px-6 py-3 text-white rounded-lg font-semibold hover:opacity-90 transition-all"
-                        style={{ backgroundColor: COLORS.primary.red }}
-                    >
-                        Go to Settings
-                    </button>
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="bg-white rounded-xl shadow-lg p-8 max-w-md text-center border-t-4" style={{ borderColor: COLORS.primary.red }}>
+                    <Calendar className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Session Not Configured</h2>
+                    <p className="text-gray-600 mb-6">Contact admin to set active session.</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="p-6">
-            <div className="max-w-7xl mx-auto">
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold mb-2" style={{ color: COLORS.primary.red }}>
-                        Mark Attendance
-                    </h1>
-                    {currentSession && currentTerm && (
-                        <p className="text-gray-600">
-                            Current Session: <span className="font-semibold">{currentSession.name}</span> | 
-                            Current Term: <span className="font-semibold">{currentTerm.name}</span>
-                        </p>
-                    )}
-                </div>
-
-                {/* Selection Section */}
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <h2 className="text-xl font-semibold mb-4">Select Class & Subject</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
-                            <select
-                                value={selectedClass?.id || ''}
-                                onChange={(e) => {
-                                    const classObj = classes.find(c => c.id === parseInt(e.target.value));
-                                    setSelectedClass(classObj);
-                                    setSelectedSubject(null);
-                                    setStudents([]);
-                                }}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                            >
-                                <option value="">Select Class</option>
-                                {classes.map(cls => (
-                                    <option key={cls.id} value={cls.id}>{cls.name}</option>
-                                ))}
-                            </select>
+        <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
+            <div className="max-w-7xl mx-auto space-y-6">
+                
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Class Attendance</h1>
+                        <p className="text-gray-500 mt-1">Manage and track student presence</p>
+                    </div>
+                    
+                    <div className="bg-white px-5 py-3 rounded-lg shadow-sm border border-gray-200 flex items-center gap-4">
+                        <div className="bg-red-50 p-2 rounded-full">
+                            <Calendar className="h-5 w-5" style={{ color: COLORS.primary.red }} />
                         </div>
-
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-                            <select
-                                value={selectedSubject?.id || ''}
-                                onChange={(e) => {
-                                    const subjectObj = selectedClass?.subjects?.find(s => s.id === parseInt(e.target.value));
-                                    setSelectedSubject(subjectObj);
-                                    setStudents([]);
-                                }}
-                                disabled={!selectedClass}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100"
-                            >
-                                <option value="">Select Subject</option>
-                                {selectedClass?.subjects?.map(subj => (
-                                    <option key={subj.id} value={subj.id}>{subj.name}</option>
-                                ))}
-                            </select>
+                            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider">Session</p>
+                            <div className="flex items-center gap-2 font-medium text-gray-800">
+                                <span>{currentSession.name}</span>
+                                <span className="text-gray-300">•</span>
+                                <span>{currentTerm.name}</span>
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    {selectedClass && selectedSubject && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Configuration Panel */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                        <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                            <School className="h-5 w-5 text-gray-500" />
+                            Configuration
+                        </h2>
+                        {fetchingRecords && (
+                             <span className="text-xs text-blue-600 flex items-center gap-1 animate-pulse">
+                                <RefreshCw className="h-3 w-3 animate-spin" />
+                                Syncing Week...
+                             </span>
+                        )}
+                    </div>
+                    
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+                        {/* Class Selection */}
+                        <div className="lg:col-span-5 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Week (1-14)</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Class</label>
                                 <select
-                                    value={week}
+                                    value={selectedClass?.id || ''}
+                                    onChange={(e) => {
+                                        const cls = classes.find(c => c.id === parseInt(e.target.value));
+                                        setSelectedClass(cls);
+                                        setSelectedSubject(null);
+                                    }}
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-500 bg-white"
+                                >
+                                    <option value="">Select Class</option>
+                                    {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Subject</label>
+                                <select
+                                    value={selectedSubject?.id || ''}
+                                    onChange={(e) => setSelectedSubject(selectedClass?.subjects?.find(s => s.id === parseInt(e.target.value)))}
+                                    disabled={!selectedClass}
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-500 bg-white disabled:bg-gray-50"
+                                >
+                                    <option value="">Select Subject</option>
+                                    {selectedClass?.subjects?.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="hidden lg:block lg:col-span-1 border-l border-gray-200 mx-auto h-full"></div>
+
+                        {/* Date/Time Selection */}
+                        <div className="lg:col-span-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Week</label>
+                                <select 
+                                    value={week} 
                                     onChange={(e) => setWeek(parseInt(e.target.value))}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500"
                                 >
                                     {Array.from({ length: 14 }, (_, i) => i + 1).map(w => (
                                         <option key={w} value={w}>Week {w}</option>
                                     ))}
                                 </select>
                             </div>
-
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Day</label>
-                                <select
-                                    value={day}
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Day</label>
+                                <select 
+                                    value={day} 
                                     onChange={(e) => setDay(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500"
                                 >
-                                    {daysOfWeek.map(d => (
-                                        <option key={d} value={d}>{d}</option>
-                                    ))}
+                                    {daysOfWeek.map(d => <option key={d} value={d}>{d}</option>)}
                                 </select>
                             </div>
-
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                                <input
-                                    type="date"
-                                    value={date}
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Date</label>
+                                <input 
+                                    type="date" 
+                                    value={date} 
                                     onChange={(e) => setDate(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500"
                                 />
                             </div>
                         </div>
-                    )}
-                    
-                    {/* Attendance Status Indicator */}
-                    {selectedClass && selectedSubject && isAttendanceMarked && (
-                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center">
-                            <CheckCircle2 className="h-5 w-5 text-green-600 mr-2" />
-                            <span className="text-sm text-green-800 font-medium">
-                                Attendance has been marked for {day}, Week {week} ({date})
-                            </span>
-                        </div>
-                    )}
+                    </div>
                 </div>
 
-                {/* Students Table */}
-                {students.length > 0 && (
-                    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">Students Attendance</h2>
-                            {isAttendanceMarked && (
-                                <span className="flex items-center text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                                    <CheckCircle2 className="h-4 w-4 mr-1" />
-                                    Marked
-                                </span>
-                            )}
+                {/* Attendance Table Area */}
+                {students.length > 0 ? (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        
+                        {/* Live Summary Bar */}
+                        <div className="bg-gray-50 border-b border-gray-200 p-4 sticky top-0 z-10 flex flex-wrap gap-4 items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                    <Users className="h-5 w-5 text-gray-500" />
+                                    Students ({students.length})
+                                </h3>
+                                
+                                {isAttendanceMarked ? (
+                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200 animate-in fade-in duration-300">
+                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                        Marked
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                                        Not Marked
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-3 text-sm">
+                                <div className="px-3 py-1 bg-green-100 text-green-700 rounded-md font-medium border border-green-200">
+                                    P: {stats.present}
+                                </div>
+                                <div className="px-3 py-1 bg-red-100 text-red-700 rounded-md font-medium border border-red-200">
+                                    A: {stats.absent}
+                                </div>
+                                <div className="hidden sm:block px-3 py-1 bg-gray-100 text-gray-600 rounded-md font-medium border border-gray-200">
+                                    {stats.percent}%
+                                </div>
+                            </div>
                         </div>
+
+                        {/* Table */}
                         <div className="overflow-x-auto">
-                            <table className="w-full">
+                            <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="border-b">
-                                        <th className="text-left py-3 px-4 font-semibold">S/N</th>
-                                        <th className="text-left py-3 px-4 font-semibold">Admission No.</th>
-                                        <th className="text-left py-3 px-4 font-semibold">Student Name</th>
-                                        <th className="text-left py-3 px-4 font-semibold">Status</th>
-                                        <th className="text-left py-3 px-4 font-semibold">Remark</th>
+                                    <tr className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200">
+                                        <th className="px-6 py-4 font-semibold w-16">#</th>
+                                        <th className="px-6 py-4 font-semibold">Student Info</th>
+                                        <th className="px-6 py-4 font-semibold w-48">Status</th>
+                                        <th className="px-6 py-4 font-semibold">Remark</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    {students.map((student, index) => (
-                                        <tr key={student.id} className="border-b hover:bg-gray-50">
-                                            <td className="py-3 px-4">{index + 1}</td>
-                                            <td className="py-3 px-4">{student.admission_number}</td>
-                                            <td className="py-3 px-4">{student.first_name} {student.middle_name || ''} {student.last_name}</td>
-                                            <td className="py-3 px-4">
-                                                <select
-                                                    value={attendanceStatus[student.id] || 'present'}
-                                                    onChange={(e) => handleStatusChange(student.id, e.target.value)}
-                                                    className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                                >
-                                                    <option value="present">Present</option>
-                                                    <option value="absent">Absent</option>
-                                                    <option value="late">Late</option>
-                                                    <option value="excused">Excused</option>
-                                                </select>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <input
-                                                    type="text"
-                                                    value={remarks[student.id] || ''}
-                                                    onChange={(e) => handleRemarkChange(student.id, e.target.value)}
-                                                    placeholder="Optional remark"
-                                                    className="w-full px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                                />
-                                            </td>
-                                        </tr>
-                                    ))}
+                                <tbody className="divide-y divide-gray-100">
+                                    {students.map((student, index) => {
+                                        const currentStatus = attendanceStatus[student.id] || 'present';
+                                        return (
+                                            <tr key={student.id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4 text-gray-500 font-medium">
+                                                    {index + 1}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="font-medium text-gray-900">
+                                                        {student.last_name}, {student.first_name} {student.middle_name}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 mt-0.5">
+                                                        {student.admission_number}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <select
+                                                        value={currentStatus}
+                                                        onChange={(e) => setAttendanceStatus(prev => ({ ...prev, [student.id]: e.target.value }))}
+                                                        disabled={isAttendanceMarked}
+                                                        className={`w-full px-3 py-2 rounded-lg text-sm font-medium border focus:ring-2 focus:ring-offset-1 transition-all outline-none appearance-none text-center ${getStatusColor(currentStatus)} ${isAttendanceMarked ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
+                                                    >
+                                                        <option value="present">Present</option>
+                                                        <option value="absent">Absent</option>
+                                                        <option value="late">Late</option>
+                                                        <option value="excused">Excused</option>
+                                                    </select>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <input
+                                                        type="text"
+                                                        value={remarks[student.id] || ''}
+                                                        onChange={(e) => setRemarks(prev => ({ ...prev, [student.id]: e.target.value }))}
+                                                        disabled={isAttendanceMarked}
+                                                        placeholder={isAttendanceMarked ? "-" : "Add note..."}
+                                                        className="w-full bg-transparent border-b border-gray-200 py-1 text-sm focus:border-red-500 focus:outline-none placeholder-gray-300"
+                                                    />
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
-                        
-                        {/* Mark Attendance Button - Moved here after the table */}
-                        <div className="mt-6 flex justify-end">
+
+                        {/* Footer */}
+                        <div className="p-6 bg-gray-50 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="text-sm text-gray-500 flex items-center gap-2">
+                                <Clock className="h-4 w-4" />
+                                <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+
                             <button
                                 onClick={handleSubmit}
                                 disabled={submitting || students.length === 0 || isAttendanceMarked}
-                                className="px-8 py-3 text-white rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center"
-                                style={{ backgroundColor: COLORS.primary.red }}
+                                className={`
+                                    flex items-center justify-center gap-2 px-8 py-3 rounded-lg font-semibold text-white shadow-md transition-all
+                                    ${isAttendanceMarked 
+                                        ? 'bg-green-600 cursor-not-allowed opacity-90' 
+                                        : 'bg-red-600 hover:bg-red-700 hover:shadow-lg active:transform active:scale-95'
+                                    }
+                                    disabled:opacity-50 disabled:cursor-not-allowed
+                                `}
+                                style={{ backgroundColor: isAttendanceMarked ? undefined : COLORS.primary.red }}
                             >
                                 {submitting ? (
                                     <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                        Saving...
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                        <span>Saving...</span>
                                     </>
                                 ) : isAttendanceMarked ? (
                                     <>
-                                        <CheckCircle2 className="h-5 w-5 mr-2" />
-                                        Already Marked
+                                        <CheckCircle2 className="h-5 w-5" />
+                                        <span>Attendance Marked</span>
                                     </>
                                 ) : (
                                     <>
-                                        <CheckCircle2 className="h-5 w-5 mr-2" />
-                                        Mark Attendance
+                                        <Save className="h-5 w-5" />
+                                        <span>Submit Attendance</span>
                                     </>
                                 )}
                             </button>
                         </div>
                     </div>
-                )}
-
-                {/* Attendance Summary */}
-                {attendanceRecords && attendanceRecords.length > 0 && (
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <h2 className="text-xl font-semibold mb-4">Attendance Summary</h2>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b">
-                                        <th className="text-left py-3 px-4 font-semibold">Student</th>
-                                        <th className="text-center py-3 px-4 font-semibold">Total</th>
-                                        <th className="text-center py-3 px-4 font-semibold">Present</th>
-                                        <th className="text-center py-3 px-4 font-semibold">Absent</th>
-                                        <th className="text-center py-3 px-4 font-semibold">Late</th>
-                                        <th className="text-center py-3 px-4 font-semibold">Excused</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {attendanceRecords.map((record) => (
-                                        <tr key={record.student_id} className="border-b hover:bg-gray-50">
-                                            <td className="py-3 px-4">
-                                                <div>
-                                                    <div className="font-medium">{record.student.name}</div>
-                                                    <div className="text-sm text-gray-500">{record.student.admission_number}</div>
-                                                </div>
-                                            </td>
-                                            <td className="text-center py-3 px-4">{record.statistics.total}</td>
-                                            <td className="text-center py-3 px-4 text-green-600 font-semibold">{record.statistics.present}</td>
-                                            <td className="text-center py-3 px-4 text-red-600 font-semibold">{record.statistics.absent}</td>
-                                            <td className="text-center py-3 px-4 text-yellow-600 font-semibold">{record.statistics.late}</td>
-                                            <td className="text-center py-3 px-4 text-blue-600 font-semibold">{record.statistics.excused}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                ) : (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                        <div className="bg-gray-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Users className="h-8 w-8 text-gray-300" />
                         </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">Select Class</h3>
+                        <p className="text-gray-500">Choose a class and subject to view students.</p>
                     </div>
                 )}
             </div>
@@ -731,4 +555,3 @@ const Attendance = () => {
 };
 
 export default Attendance;
-

@@ -302,15 +302,57 @@ const StudentResults = () => {
   const totalScore = scaledResults.reduce((sum, result) => sum + result.total, 0);
   const averageScore = scaledResults.length > 0 ? (totalScore / scaledResults.length).toFixed(1) : 0;
 
+  // Calculate third term final average (Nigerian school system)
+  // Final Average = (First Term Average + Second Term Average + Third Term Average) / 3
+  const calculateThirdTermFinalAverage = () => {
+    if (selectedTerm !== 'Third Term' || !selectedSession || !results[selectedSession]) {
+      return null;
+    }
+
+    const sessionResults = results[selectedSession];
+    const firstTermResults = sessionResults['First Term'] || [];
+    const secondTermResults = sessionResults['Second Term'] || [];
+    const thirdTermResults = sessionResults['Third Term'] || [];
+
+    // Calculate average for each term
+    const calculateTermAverage = (termResults) => {
+      if (!termResults || termResults.length === 0) return null;
+      const scaled = getScaledResults(termResults);
+      const total = scaled.reduce((sum, result) => sum + result.total, 0);
+      return scaled.length > 0 ? parseFloat((total / scaled.length).toFixed(2)) : null;
+    };
+
+    const firstTermAvg = calculateTermAverage(firstTermResults);
+    const secondTermAvg = calculateTermAverage(secondTermResults);
+    const thirdTermAvg = calculateTermAverage(thirdTermResults);
+
+    // Only calculate if we have all three term averages
+    if (firstTermAvg !== null && secondTermAvg !== null && thirdTermAvg !== null) {
+      const finalAverage = parseFloat(((firstTermAvg + secondTermAvg + thirdTermAvg) / 3).toFixed(2));
+      return {
+        firstTermAverage: firstTermAvg,
+        secondTermAverage: secondTermAvg,
+        thirdTermAverage: thirdTermAvg,
+        finalAverage: finalAverage
+      };
+    }
+
+    return null;
+  };
+
+  const thirdTermFinalAverage = calculateThirdTermFinalAverage();
+
   // Check if all subjects have complete scores recorded
   const areAllScoresComplete = () => {
     // If no subjects assigned, return false
     if (!studentSubjects || studentSubjects.length === 0) {
+      debug.log('No student subjects found');
       return false;
     }
 
     // If no results for selected session/term, return false
     if (!currentResults || currentResults.length === 0) {
+      debug.log('No current results found');
       return false;
     }
 
@@ -333,23 +375,37 @@ const StudentResults = () => {
       return null;
     }).filter(id => id !== null);
 
+    debug.log('Student subjects:', studentSubjects);
+    debug.log('Result subject IDs:', resultSubjectIds);
+
     // Check if all student subjects have results
     const allSubjectsHaveResults = studentSubjects.every(subjectId => 
       resultSubjectIds.includes(subjectId)
     );
 
     if (!allSubjectsHaveResults) {
+      debug.log('Not all subjects have results');
       return false;
     }
 
     // Check if all results have complete scores (first_ca, second_ca, exam_score)
+    // Allow 0 as a valid score, but not null or undefined
     const allScoresComplete = currentResults.every(result => {
       const firstCA = result.first_ca !== null && result.first_ca !== undefined;
       const secondCA = result.second_ca !== null && result.second_ca !== undefined;
       const exam = result.exam_score !== null && result.exam_score !== undefined;
-      return firstCA && secondCA && exam;
+      const isComplete = firstCA && secondCA && exam;
+      if (!isComplete) {
+        debug.log('Incomplete scores for subject:', result.subject?.name || result.subject_id, {
+          first_ca: result.first_ca,
+          second_ca: result.second_ca,
+          exam_score: result.exam_score
+        });
+      }
+      return isComplete;
     });
 
+    debug.log('All scores complete:', allScoresComplete);
     return allScoresComplete;
   };
 
@@ -750,6 +806,36 @@ const StudentResults = () => {
               </div>
             </div>
 
+            ${thirdTermFinalAverage && selectedTerm === 'Third Term' ? `
+            <div style="margin: 15px 0; padding: 12px; background: white; border: 1px solid #e5e7eb; border-radius: 6px;">
+              <h4 style="font-size: ${forPrint ? '10px' : '12px'}; font-weight: 600; color: #111827; margin-bottom: 10px;">Final Average Calculation</h4>
+              <div style="font-size: ${forPrint ? '8px' : '10px'};">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span style="color: #4b5563;">First Term Average:</span>
+                  <span style="font-weight: 500; color: #111827;">${thirdTermFinalAverage.firstTermAverage}%</span>
+                </div>
+                <div style="text-align: center; color: #9ca3af; margin: 2px 0; font-size: ${forPrint ? '8px' : '10px'};">+</div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span style="color: #4b5563;">Second Term Average:</span>
+                  <span style="font-weight: 500; color: #111827;">${thirdTermFinalAverage.secondTermAverage}%</span>
+                </div>
+                <div style="text-align: center; color: #9ca3af; margin: 2px 0; font-size: ${forPrint ? '8px' : '10px'};">+</div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span style="color: #4b5563;">Third Term Average:</span>
+                  <span style="font-weight: 500; color: #111827;">${thirdTermFinalAverage.thirdTermAverage}%</span>
+                </div>
+                <div style="text-align: center; color: #9ca3af; margin: 6px 0 4px 0; padding-top: 4px; border-top: 1px solid #e5e7eb; font-size: ${forPrint ? '8px' : '10px'};">÷ 3</div>
+                <div style="display: flex; justify-content: space-between; padding-top: 6px; margin-top: 6px; border-top: 1px solid #d1d5db;">
+                  <span style="font-size: ${forPrint ? '9px' : '11px'}; font-weight: 600; color: #111827;">Final Average for this Class:</span>
+                  <span style="font-size: ${forPrint ? '11px' : '13px'}; font-weight: bold; color: #dc2626;">${thirdTermFinalAverage.finalAverage}%</span>
+                </div>
+                <p style="font-size: ${forPrint ? '7px' : '9px'}; color: #6b7280; margin-top: 6px; text-align: center;">
+                  (First Term Average + Second Term Average + Third Term Average) ÷ 3
+                </p>
+              </div>
+            </div>
+            ` : ''}
+
             <div class="remarks-section">
               <div class="remark-box">
                 <h4>Teacher's Remark</h4>
@@ -1143,6 +1229,37 @@ const StudentResults = () => {
           </div>
         )}
       </div>
+
+      {/* Third Term Final Average Calculation - Only for Third Term */}
+      {thirdTermFinalAverage && selectedTerm === 'Third Term' && (
+        <div className="mt-6 bg-white shadow rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">Final Average Calculation</h3>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600">First Term Average:</span>
+              <span className="font-medium text-gray-900">{thirdTermFinalAverage.firstTermAverage}%</span>
+            </div>
+            <div className="flex items-center justify-center text-gray-400 text-xs">+</div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600">Second Term Average:</span>
+              <span className="font-medium text-gray-900">{thirdTermFinalAverage.secondTermAverage}%</span>
+            </div>
+            <div className="flex items-center justify-center text-gray-400 text-xs">+</div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600">Third Term Average:</span>
+              <span className="font-medium text-gray-900">{thirdTermFinalAverage.thirdTermAverage}%</span>
+            </div>
+            <div className="flex items-center justify-center text-gray-400 text-xs border-t border-gray-200 pt-2 mt-2">÷ 3</div>
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-gray-300">
+              <span className="text-sm font-semibold text-gray-900">Final Average for this Class:</span>
+              <span className="text-base font-bold" style={{ color: COLORS.primary.red }}>{thirdTermFinalAverage.finalAverage}%</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1 text-center">
+              (First Term Average + Second Term Average + Third Term Average) ÷ 3
+            </p>
+          </div>
+        </div>
+      )}
 
         {/* Teacher/Principal Remarks - Only show when all scores are complete */}
         {scaledResults.length > 0 && canDownloadOrPrint && (
