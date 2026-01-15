@@ -1085,7 +1085,19 @@ class API {
     }
 
     async exportScores(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
+        // Build query string manually to handle arrays properly for Laravel
+        const queryParts = [];
+        for (const [key, value] of Object.entries(params)) {
+            if (Array.isArray(value)) {
+                // Format arrays as key[]=value1&key[]=value2 for Laravel
+                value.forEach(item => {
+                    queryParts.push(`${encodeURIComponent(key)}[]=${encodeURIComponent(item)}`);
+                });
+            } else if (value !== null && value !== undefined) {
+                queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+            }
+        }
+        const queryString = queryParts.join('&');
         const url = `${this.baseURL}/admin/scores/export${queryString ? `?${queryString}` : ''}`;
         const headers = this.getHeaders();
         
@@ -1094,6 +1106,7 @@ class API {
                 ...headers,
                 'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             },
+            credentials: 'include',
         });
 
         if (!response.ok) {
@@ -1110,14 +1123,29 @@ class API {
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
+        
+        // Get filename from Content-Disposition header if available, otherwise use default
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = `scores_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+            if (filenameMatch) {
+                filename = filenameMatch[1];
+            }
+        }
+        
         link.href = downloadUrl;
-        link.download = `scores_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(downloadUrl);
 
         return { success: true };
+    }
+
+    async getTeacherClassesAndSubjects(teacherId) {
+        return await this.request(`/admin/teachers/${teacherId}/classes-subjects`);
     }
 
     async downloadScoreTemplate() {
